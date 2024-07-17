@@ -21,7 +21,10 @@ def write2file(content: str) -> None:
         f.write(content)
 
 def claim_daily() -> None:
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install())) #this installs a chromedriver to be used as a service for the webdriver
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless") #less resources to run the webpage without the GUI
+    options.add_argument("--disable-gpu")
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options) #this installs a chromedriver to be used as a service for the webdriver
     try:
         driver.get(URL)
         WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".onetrust-close-btn-handler"))).click() #close cookie popup
@@ -37,14 +40,14 @@ def claim_daily() -> None:
     except Exception as err:
         print(f"Cannot obtain URL for some reason {err}.")
     finally:
-        sleep(30)
         driver.quit()
 
-# def run_at_2pm(time: str) -> None:
-#     est = timezone('US/Eastern')
-    
-#     claim_daily()
-
+def run_at_pickedtime(time: str) -> None:
+    every().day().at(time).do(claim_daily) #syntatic sugar for run_pending to know when to run claim_daily, doesn't actually schedule anything by itself
+    while True:
+        run_pending() #checks for time 
+        sleep(50)
 if __name__ == '__main__':
-    claim_daily()
+    run_at_pickedtime('14:02') #run at 2:02 PM EST in case of network issues from the site
+    
     
